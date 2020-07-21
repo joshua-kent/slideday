@@ -1,47 +1,64 @@
 #!/bin/bash
 
-# Slideday v1.0.0
-# This chooses a new wallpaper every day.
+# -----------------------
+# --- Slideday v1.0.0 ---
+# -----------------------
+#
+# This chooses a new wallpaper every day (but never the same one twice in a row!).
 
-outputDir="/tmp/slideday"
+
+outputDir="/tmp/slideday" # stdout gets dumped in this temporary file
 currDay=$(expr `date +%s` / 86400) # days since Unix Epoch (1 January 1970)
-currDir=`dirname "$0"`
-cacheDir="$currDir/cache"
-backgroundsDir="$currDir/backgrounds"
-bckgCache="$cacheDir/bckg.cache"
-gencache="$currDir/src/gencache.sh"
+currDir=`dirname "$0"` # current directory of script (not current working directory)
+cacheDir="$currDir/cache" # cache directory
+backgroundsDir="$currDir/backgrounds" # backgrounds directory
+bckgCache="$cacheDir/bckg.cache" # background cache file
+gencache="$currDir/src/gencache.sh" # generate cache file bash script
 
 echo "`date +%x` at `date +%T` | Starting..." >> $outputDir
 
+
+
+# --- Get the last background (from bckg.cache) if it exists and its date ---
+# --- If the bckg.cache file does not exist, then create it with gencache.sh ---
+# --- (bckg.cache stores the last background used, and the day it was last changed) --
+
 if [ -f $bckgCache ]
 then
-    lupCache=`sed -n 7p $bckgCache`
+    lupCache=`sed -n 7p $bckgCache` # date bckg.cache was last updated
     if [[ $lupCache =~ `date +%x` ]]
     then
         backgroundLine=`sed -n 5p $bckgCache`
-        background=${backgroundLine:16}
-    else
-        sh $gencache
+        background=${backgroundLine:16} # truncate line 5 of bckg.cache (looks like: BACKGROUND     example.jpg)
+    else # if the cache does NOT contain today's date (i.e. it was last updated before today)
+        sh $gencache # update cache
         nohup sh `dirname "$0"`/`basename "$0"` >> /tmp/slideday & # re-run this script again
         exit
     fi
 else
-    sh $gencache
+    sh $gencache # update cache
     nohup sh `dirname "$0"`/`basename "$0"` >> /tmp/slideday & # re-run this script again
     exit
 fi
+background="$backgroundsDir/$background" # add the directory to background variable (it is not included in bckg.cache)
 
-background="$backgroundsDir/$background"
+
+
+# --- Apply the wallpaper ---
+
 echo "`date +%x` at `date +%T` | Applying background: $background" >> $outputDir
 nitrogen --set-zoom-fill $background
 
+
+
+# --- Check for new day every 60 seconds ---
+
+
+# --- Make sure it will update at least 1 second after a new minute ---
 if [ `date +%S` != "01" ] # at least one second offset (in case it is too quick for the time to update)
 then
-    # this is to make sure that when it is a new day,
-    # it should change almost exactly on that point (synchronises the time
-    # it checks for a new day with the change in minute)
-
     restore_sync=$(expr 60 - `date +%S` + 1) # one second offset again
+
     echo "`date +%x` at `date +%T` | Waiting for $restore_sync seconds..." >> $outputDir
     sleep $restore_sync
     echo "`date +%x` at `date +%T` | Done." >> $outputDir
@@ -49,9 +66,9 @@ fi
 
 while true
 do
-    newDay=$(expr `date +%s` / 86400)
+    realtimeDay=$(expr `date +%s` / 86400) # get current day (86400 seconds in a day)
     
-    if [ $newDay != $currDay ]
+    if [ $realtimeDay != $currDay ] # check if it is different to the day at the start of the script
     then
         echo "`date +%x` at `date +%T` | New day!" >> $outputDir
         nohup sh `dirname "$0"`/`basename "$0"` >> $outputDir & # re-run this script again
@@ -60,5 +77,5 @@ do
 
     echo "`date +%x` at `date +%T` | Waiting for 60 seconds..." >> $outputDir
     sleep 60
-    echo "`date +%x` at `date +%T` | Cycling for 60 seconds..." >> $outputDir
+    echo "`date +%x` at `date +%T` | Cycling script..." >> $outputDir
 done

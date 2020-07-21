@@ -1,9 +1,11 @@
 #!/bin/bash
 
+# --- Generates bckg.cache file using genrand.py ---
+
 currDay=$(expr `date +%s` / 86400) # days since Unix Epoch (1 January 1970)
-currDir=`dirname "$0"`
-cacheDir="$currDir/../cache"
-bckgCache="$cacheDir/bckg.cache"
+currDir=`dirname "$0"` # this script's directory (not necessarily working directory)
+cacheDir="$currDir/../cache" # cache directory
+bckgCache="$cacheDir/bckg.cache" # bckg.cache file
 
 if [ ! -f $bckgCache ]
 then
