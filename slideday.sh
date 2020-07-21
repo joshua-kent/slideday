@@ -23,23 +23,9 @@ echo "`date +%x` at `date +%T` | Starting..." >> $outputDir
 # --- If the bckg.cache file does not exist, then create it with gencache.sh ---
 # --- (bckg.cache stores the last background used, and the day it was last changed) --
 
-if [ -f $bckgCache ]
-then
-    lupCache=`sed -n 7p $bckgCache` # date bckg.cache was last updated
-    if [[ $lupCache =~ `date +%x` ]]
-    then
-        backgroundLine=`sed -n 5p $bckgCache`
-        background=${backgroundLine:16} # truncate line 5 of bckg.cache (looks like: BACKGROUND     example.jpg)
-    else # if the cache does NOT contain today's date (i.e. it was last updated before today)
-        sh $gencache # update cache
-        nohup sh `dirname "$0"`/`basename "$0"` >> /tmp/slideday & # re-run this script again
-        exit
-    fi
-else
-    sh $gencache # update cache
-    nohup sh `dirname "$0"`/`basename "$0"` >> /tmp/slideday & # re-run this script again
-    exit
-fi
+sh $gencache > $outputDir # update cache
+backgroundLine=`sed -n 5p $bckgCache`
+background=${backgroundLine:16} # truncate line 5 of bckg.cache (looks like: BACKGROUND     example.jpg)
 background="$backgroundsDir/$background" # add the directory to background variable (it is not included in bckg.cache)
 
 
